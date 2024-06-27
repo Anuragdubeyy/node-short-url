@@ -2,6 +2,8 @@ const express = require("express");
 const { connectMongoDb } = require("./connect");
 const path = require("path");
 const URL = require("./models/url");
+const cookiesParser = require("cookie-parser");
+const {restrictToLoggedInUserOnly, checkAuth} = require("./middelware/auth");
 
 // routes
 const userUrlRoutes = require("./routes/url");
@@ -11,13 +13,16 @@ const userRoute = require("./routes/user");
 // port
 const app = express();
 const PORT = 8001;
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cookiesParser());
 
 // routes
-app.use("/url", userUrlRoutes);
+app.use("/url", restrictToLoggedInUserOnly, userUrlRoutes);
 app.use("/user", userRoute);
-app.use("/", staticRoute);
+app.use("/", checkAuth, staticRoute);
 
 connectMongoDb("mongodb://127.0.0.1:27017/short-url")
   .then(() => console.log("mongoDb connected"))
